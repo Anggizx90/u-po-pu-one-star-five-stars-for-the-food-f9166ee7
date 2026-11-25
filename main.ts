@@ -9,18 +9,25 @@ import { join } from "node:path";
 const SENTENCE =
   "I give Earth one star because humans fence off land they did not create, then argue about who owns which side, but the xiao long bao handed over that fence were worth the trespass.";
 
-// The gate: /output/entry.txt must be UTF-8 text of 1-200 characters, not
-// only whitespace, exactly one sentence. Fail loudly instead of writing an
-// invalid entry.
-if (
-  SENTENCE.length < 1 ||
-  SENTENCE.length > 200 ||
-  !SENTENCE.trim() ||
-  (SENTENCE.match(/\./g) ?? []).length !== 1 ||
-  !SENTENCE.endsWith(".")
-) {
-  throw new Error(`entry sentence is ${SENTENCE.length} chars, outside the 1-200 gate`);
+// Validates the entry against the competition gate before anything is
+// written: 1-200 characters (counted as Unicode code points, matching the
+// competition's UTF-8 character count), not only whitespace, exactly one
+// sentence (a single period at the end), and no trailing newline.
+function validateSentence(sentence: string): void {
+  const charCount = [...sentence].length;
+  if (
+    charCount < 1 ||
+    charCount > 200 ||
+    !sentence.trim() ||
+    /[\n\r]/.test(sentence) ||
+    (sentence.match(/\./g) ?? []).length !== 1 ||
+    !sentence.endsWith(".")
+  ) {
+    throw new Error(`entry sentence is ${charCount} chars, outside the 1-200 gate`);
+  }
 }
+
+validateSentence(SENTENCE);
 
 const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 mkdirSync(outDir, { recursive: true });
